@@ -150,4 +150,291 @@ if not DEBUG:
 - [ ] `python manage.py check` passes with env loaded
 - [ ] App runs with `python manage.py runserver` using dev env
 
-**Next:** When ready, ask to proceed to next step (e.g. "continue roadmap to step 2: Project structure & custom User model").
+**Next:** Proceed to Step 2: Auth & Base UI.
+
+
+## Step 2: Auth & Base UI (1 day)
+
+### Goal
+Set up authentication (register/login/logout), make email the primary identifier conceptually, create base template with navbar, and add profile page at `/u/<username>/`.
+
+> Note: Project uses `configs/` as project module and `main/` as app. Custom User model will be added as needed; for now follow the steps below.
+
+### 2a) Update settings for auth & templates
+- [ ] Add auth redirect settings to `configs/settings.py`
+
+```python
+# Auth
+LOGIN_URL = "login"
+LOGIN_REDIRECT_URL = "home"
+LOGOUT_REDIRECT_URL = "home"
+```
+
+- [ ] Ensure `templates` are discoverable (APP_DIRS True is set). We'll create templates under `main/templates/`.
+
+### 2b) Create custom User model with email as primary identifier (conceptually)
+- [ ] In `main/models.py`, create a custom User extending `AbstractUser` and make email required/unique (or use email as login). Also add `bio` later if desired.
+
+```python
+from django.contrib.auth.models import AbstractUser
+from django.db import models
+from django.urls import reverse
+
+class User(AbstractUser):
+    email = models.EmailField(unique=True)
+    bio = models.CharField(max_length=300, blank=True)
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username']
+
+    def get_absolute_url(self):
+        return reverse("profile", args=[self.username])
+
+    def __str__(self):
+        return self.email
+```
+
+- [ ] Point Django to custom user model in `configs/settings.py` (must be done before first migrations if starting fresh). Add:
+
+```python
+AUTH_USER_MODEL = "main.User"
+```
+
+> If you already ran migrations with default User, you'll need to reset DB/migrations for a clean start in dev. Only do this if acceptable.
+
+### 2c) Create forms for registration
+- [ ] Create/update `main/forms.py`
+
+```python
+from django import forms
+from django.contrib.auth.forms import UserCreationForm
+from .models import User
+
+class RegisterForm(UserCreationForm):
+    email = forms.EmailField(required=True)
+
+    class Meta:
+        model = User
+        fields = ("email", "username", "password1", "password2")
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.email = self.cleaned_data["email"]
+        if commit:
+            user.save()
+        return user
+```
+
+### 2d) Add URLs for auth, home, profile
+- [ ] Update `configs/urls.py` to include `main.urls`
+
+```python
+from django.contrib import admin
+from django.urls import include, path
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('', include('main.urls')),
+]
+```
+
+- [ ] Create `main/urls.py`
+
+```python
+from django.contrib.auth import views as auth_views
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.home, name='home'),
+    path('register/', views.register, name='register'),
+    path('login/', auth_views.LoginView.as_view(template_name='main/registration/login.html'), name='login'),
+    path('logout/', auth_views.LogoutView.as_view(), name='logout'),
+    path('u/<str:username>/', views.profile, name='profile'),
+]
+```
+
+### 2e) Create views for register, home, profile
+- [ ] Update `main/views.py`
+
+```python
+from django.contrib.auth import login
+from django.shortcuts import render, redirect, get_object_or_404
+from .forms import RegisterForm
+from .models import User
+
+def home(request):
+    return render(request, 'main/home.html')
+
+def register(request):
+    form = RegisterForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        user = form.save()
+        login(request, user)
+        return redirect('home')
+    return render(request, 'main/registration/register.html', {'form': form})
+
+def profile(request, username):
+    profile_user = get_object_or_404(User, username=username)
+    return render(request, 'main/profile.html', {'profile_user': profile_user})
+```
+
+### 2f) Create base template with navbar (login state, create post, search box)
+- [ ] Create directories: `main/templates/`, `main/templates/main/`, `main/templates/main/registration/`, `main/templates/main/partials/`
+- [ ] Create `main/templates/base.html`
+
+```html
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Readit{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  </head>
+  <body class="bg-light">
+    <nav class="navbar navbar-expand-lg bg-white border-bottom sticky-top">
+      <div class="container">
+        <a class="navbar-brand fw-bold text-danger" href="{% url 'home' %}">readit</a>
+        <form class="d-flex flex-grow-1 mx-lg-4 my-2 my-lg-0" action="#" method="get">
+          <input class="form-control" type="search" name="q" placeholder="Search" value="{{ request.GET.q }}">
+        </form>
+        <ul class="navbar-nav ms-auto flex-row gap-2 align-items-center">
+          <li class="nav-item"><a class="nav-link" href="#">All</a></li>
+          {% if user.is_authenticated %}
+            <li class="nav-item"><a class="nav-link" href="#">+ Create post</a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'profile' user.username %}">u/{{ user.username }}</a></li>
+            <li class="nav-item">
+              <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button class="btn btn-sm btn-outline-secondary">Logout</button>
+              </form>
+            </li>
+          {% else %}
+            <li class="nav-item"><a class="btn btn-sm btn-outline-danger" href="{% url 'login' %}">Log in</a></li>
+            <li class="nav-item"><a class="btn btn-sm btn-danger" href="{% url 'register' %}">Sign up</a></li>
+          {% endif %}
+        </ul>
+      </div>
+    </nav>
+    <main class="container py-4">
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags|default:'info' }}">{{ message }}</div>
+      {% endfor %}
+      {% block content %}{% endblock %}
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
+  </body>
+</html>
+```
+
+### 2g) Create auth templates and pages
+- [ ] `main/templates/main/registration/login.html`
+
+```html
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-4">
+    <h4>Log in</h4>
+    <form method="post" class="card card-body">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <input type="hidden" name="next" value="{{ request.GET.next }}">
+      <button class="btn btn-danger">Log in</button>
+    </form>
+    <p class="mt-3 small">New here? <a href="{% url 'register' %}">Sign up</a></p>
+  </div>
+</div>
+{% endblock %}
+```
+
+- [ ] `main/templates/main/registration/register.html`
+
+```html
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-4">
+    <h4>Sign up</h4>
+    <form method="post" class="card card-body">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button class="btn btn-danger">Create account</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+```
+
+- [ ] `main/templates/main/home.html`
+
+```html
+{% extends "base.html" %}
+{% block title %}Home · readit{% endblock %}
+{% block content %}
+<div class="row">
+  <div class="col-lg-8">
+    <h4 class="mb-3">Home</h4>
+    <p class="text-muted">Welcome to Readit.</p>
+  </div>
+</div>
+{% endblock %}
+```
+
+- [ ] `main/templates/main/profile.html`
+
+```html
+{% extends "base.html" %}
+{% block title %}u/{{ profile_user.username }}{% endblock %}
+{% block content %}
+<div class="row">
+  <div class="col-lg-8">
+    <div class="card mb-3">
+      <div class="card-body">
+        <h3>u/{{ profile_user.username }}</h3>
+        <div class="text-muted small">Joined {{ profile_user.date_joined|date:"M Y" }}</div>
+        {% if profile_user.bio %}
+          <p class="mt-2 mb-0">{{ profile_user.bio }}</p>
+        {% endif %}
+        <div class="mt-2 small text-muted">{{ profile_user.email }}</div>
+      </div>
+    </div>
+    <h5>Posts</h5>
+    <p class="text-muted">No posts yet.</p>
+  </div>
+</div>
+{% endblock %}
+```
+
+### 2h) Migrate and test
+- [ ] Create and apply migrations
+
+```bash
+python manage.py makemigrations main
+python manage.py migrate
+```
+
+- [ ] Create superuser
+
+```bash
+python manage.py createsuperuser
+```
+
+- [ ] Run server and test flows
+
+```bash
+python manage.py runserver
+```
+
+### Verification
+- [ ] Can register a new user (email + username + password)
+- [ ] Can login/logout (logout uses POST form)
+- [ ] Navbar shows correct state based on auth
+- [ ] Profile page loads at `/u/<username>/`
+- [ ] Email is used as USERNAME_FIELD and shown conceptually as primary identifier
+- [ ] `python manage.py check` passes
+
+**Next:** Proceed to Step 3: Communities (create, detail, join/leave).
