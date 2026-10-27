@@ -107,6 +107,7 @@ reddit_clone/
 ### Phase 1 — Auth & Base UI (1 day)
 
 - [ ] Register / login / logout
+- [ ] Set Email As Primary field
 - [ ] `base.html` with navbar (login state, create post, search box)
 - [ ] Profile page (`/u/<username>/`)
 
