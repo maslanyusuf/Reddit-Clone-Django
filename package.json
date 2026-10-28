@@ -1,0 +1,21 @@
+{
+  "name": "reddit-clone-django",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest",
+    "daisyui": "^5.7.50"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@tailwindcss/cli": "^4.3.3",
+    "tailwindcss": "^4.3.3"
+  },
+  "scripts": {
+    "watch:css": "bunx @tailwindcss/cli -i ./static/css/input.css -o ./static/css/styles.css --watch",
+    "build:css": "bunx @tailwindcss/cli -i ./static/css/input.css -o ./static/css/styles.css --minify"
+  }
+}
