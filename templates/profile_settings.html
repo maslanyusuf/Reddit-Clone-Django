@@ -1,0 +1,60 @@
+{% extends './base.html' %}
+
+{% block content %}
+  <h1>Profile Settings</h1>
+
+  <!-- 1. Display Non-Field Errors (e.g., "Passwords do not match") -->
+  {% if form.non_field_errors %}
+    <div style="color: red; margin-bottom: 15px; border: 1px solid red; padding: 10px;">
+      {% for error in form.non_field_errors %}
+        <p>{{ error }}</p>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <form action="{% url 'main:profile_settings' %}" method="post" novalidate>
+    {% csrf_token %}
+
+    <!-- First Name -->
+    <div style="margin-bottom: 10px;">
+      <label for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}</label><br />
+      {{ form.first_name }}
+      {% if form.first_name.errors %}
+        <div style="color: red;">{{ form.first_name.errors }}</div>
+      {% endif %}
+    </div>
+
+    <!-- Last Name -->
+    <div style="margin-bottom: 10px;">
+      <label for="{{ form.last_name.id_for_label }}">{{ form.last_name.label }}</label><br />
+      {{ form.last_name }}
+      {% if form.last_name.errors %}
+        <div style="color: red;">{{ form.last_name.errors }}</div>
+      {% endif %}
+    </div>
+
+    <!-- Username -->
+    <div style="margin-bottom: 10px;">
+      <label for="{{ form.username.id_for_label }}">{{ form.username.label }}</label><br />
+      {{ form.username }}
+      {% if form.username.errors %}
+        <div style="color: red;">{{ form.username.errors }}</div>
+      {% endif %}
+    </div>
+
+    <!-- Bio -->
+    <div style="margin-bottom: 10px;">
+      <label for="{{ form.bio.id_for_label }}">{{ form.bio.label }}</label><br />
+      {{ form.bio }}
+      {% if form.bio.errors %}
+        <div style="color: red;">{{ form.bio.errors }}</div>
+      {% endif %}
+    </div>
+
+    <button type="submit">Save Changes</button>
+  </form>
+
+  <div>
+    <a href="{% url 'main:password_change' %}">Update Password</a>
+  </div>
+{% endblock %}

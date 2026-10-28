@@ -1,1 +1,30 @@
-<header>Header</header>
+<header>
+  <nav>
+    <a href="{% url 'main:home' %}">RedditClone</a>
+
+    <ul>
+      <li>
+        <a href="{% url 'main:home' %}">Home</a>
+      </li>
+    </ul>
+
+    <ul>
+      {% if not request.user.is_authenticated %}
+        <li>
+          <a href="{% url 'main:register' %}">Create Account</a>
+        </li>
+      {% else %}
+        <li>
+          <form action="{% url 'main:logout' %}" method="post">
+            {% csrf_token %}
+            <button type="submit">Logout</button>
+          </form>
+        </li>
+
+        <li>
+          <a href="{% url 'main:profile_settings' %}">Settings</a>
+        </li>
+      {% endif %}
+    </ul>
+  </nav>
+</header>

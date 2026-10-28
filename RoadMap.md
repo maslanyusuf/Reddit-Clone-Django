@@ -564,3 +564,487 @@ python manage.py runserver
 - [ ] `python manage.py check` passes
 
 **Next:** Proceed to Step 3: Communities (create, detail, join/leave).
+
+
+## Reference (Existing Implementation)
+
+This section captures the current working state of the codebase for easy recreation/reference.
+
+### Settings (`configs/settings.py`)
+```python
+"""
+Django settings for configs project.
+"""
+from pathlib import Path
+from decouple import config, Csv
+import os
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+SECRET_KEY = config("SECRET_KEY")
+DEBUG = config("DEBUG", default=False, cast=bool)
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='', cast=Csv())
+CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='', cast=Csv())
+
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'main',
+]
+
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
+ROOT_URLCONF = 'configs.urls'
+
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [BASE_DIR/'templates'],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+            ],
+        },
+    },
+]
+
+WSGI_APPLICATION = 'configs.wsgi.application'
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
+
+AUTH_PASSWORD_VALIDATORS = [
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
+]
+
+LANGUAGE_CODE = 'en-us'
+TIME_ZONE = 'UTC'
+USE_I18N = True
+USE_TZ = True
+
+STATIC_URL = 'static/'
+STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+AUTH_USER_MODEL = "main.User"
+```
+
+### URLs (`configs/urls.py`)
+```python
+from django.contrib import admin
+from django.urls import path, include
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('', include('main.urls')),
+]
+```
+
+### Custom User Model (`main/models.py`)
+```python
+from django.db import models
+from django.conf import settings
+from django.urls import reverse
+from django.utils import timezone
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+
+
+class UserManager(BaseUserManager):
+    use_in_migrations = True
+
+    def _create_user(self, email, username, password, **extra_fields):
+        if not email:
+            raise ValueError("The Email field is required")
+        if not username:
+            raise ValueError("The Username field is required")
+
+        email = self.normalize_email(email)
+        user = self.model(email=email, username=username, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_user(self, email, username, password=None, **extra_fields):
+        extra_fields.setdefault('is_staff', False)
+        extra_fields.setdefault('is_superuser', False)
+        return self._create_user(email, username, password, **extra_fields)
+
+    def create_superuser(self, email, username, password=None, **extra_fields):
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+
+        if extra_fields.get('is_staff') is not True:
+            raise ValueError('Superuser must have is_staff=True.')
+        if extra_fields.get('is_superuser') is not True:
+            raise ValueError('Superuser must have is_superuser=True.')
+
+        return self._create_user(email, username, password, **extra_fields)
+
+
+class User(AbstractBaseUser, PermissionsMixin):
+    email = models.EmailField(verbose_name="Email", unique=True)
+    username = models.CharField(verbose_name="Username", unique=True, max_length=150)
+    first_name = models.CharField(verbose_name="First Name", max_length=256, blank=True)
+    last_name = models.CharField(verbose_name="Last Name", max_length=256, blank=True)
+    bio = models.CharField(verbose_name="Bio", max_length=512, blank=True)
+
+    is_active = models.BooleanField(verbose_name="Active", default=True)
+    is_staff = models.BooleanField(verbose_name="Staff", default=False)
+    date_joined = models.DateTimeField(verbose_name="Date joined", default=timezone.now)
+
+    objects = UserManager()
+
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = ["username", "first_name", "last_name"]
+
+    class Meta:
+        verbose_name = "User"
+        verbose_name_plural = "Users"
+
+    def __str__(self):
+        return self.email
+
+    def get_full_name(self):
+        return f"{self.first_name} {self.last_name}".strip() or self.email
+
+    def get_absolute_url(self):
+        return reverse("profile", kwargs={"username": self.username})
+```
+
+### Forms (`main/forms.py`)
+```python
+from django import forms
+from django.contrib.auth.forms import PasswordChangeForm, UserCreationForm
+from django.contrib.auth import authenticate
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+
+class RegisterForm(UserCreationForm):
+    first_name = forms.CharField(required=True, max_length=256, widget=forms.TextInput(attrs={"type": "text", "class": "form-control"}))
+    last_name = forms.CharField(required=True, max_length=256, widget=forms.TextInput(attrs={"type": "text", "class": "form-control"}))
+    email = forms.EmailField(required=True, max_length=256, widget=forms.EmailInput(attrs={"type": "email", "class": "form-control"}))
+    username = forms.CharField(required=True, max_length=150, widget=forms.TextInput(attrs={"type": "text", "class": "form-control"}))
+
+    class Meta:
+        model = User
+        fields = ("first_name", "last_name", "email", "username", "password1", "password2")
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email', '').strip().lower()
+        if User.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError("A user with this email address already exists.")
+        return email
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username', '').strip()
+        if User.objects.filter(username__iexact=username).exists():
+            raise forms.ValidationError("A user with this username already exists.")
+        return username
+
+
+class LoginForm(forms.Form):
+    email = forms.EmailField(
+        required=True,
+        max_length=256,
+        widget=forms.EmailInput(attrs={"type": "email", "class": "form-control", "placeholder": "Email Address"})
+    )
+    password = forms.CharField(
+        required=True,
+        widget=forms.PasswordInput(attrs={"type": "password", "class": "form-control", "placeholder": "Password"})
+    )
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email', '').strip().lower()
+        return email
+
+    def clean(self):
+        cleaned_data = super().clean()
+        email = cleaned_data.get('email')
+        password = cleaned_data.get('password')
+
+        if email and password:
+            user = authenticate(username=email, password=password)
+            if user is None:
+                raise forms.ValidationError("Invalid email or password.")
+            if not user.is_active:
+                raise forms.ValidationError("This account has been deactivated.")
+            cleaned_data['user'] = user
+        return cleaned_data
+
+
+class ProfileSettingsForm(forms.ModelForm):
+    first_name = forms.CharField(max_length=256, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'First Name'}))
+    last_name = forms.CharField(max_length=256, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Last Name'}))
+    username = forms.CharField(max_length=150, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Username'}))
+    bio = forms.CharField(max_length=512, required=False, widget=forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Tell us about yourself...', 'rows': 3}))
+
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'username', 'bio']
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username', '').strip()
+        if User.objects.filter(username__iexact=username).exclude(pk=self.instance.pk).exists():
+            raise forms.ValidationError("This username is already taken.")
+        return username
+
+
+class CustomPasswordChangeForm(PasswordChangeForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs.update({'class': 'form-control'})
+```
+
+### Views (`main/views.py`)
+```python
+from django.contrib import messages
+from django.shortcuts import get_object_or_404, redirect, render
+from django.contrib.auth import login, logout, get_user_model, update_session_auth_hash
+from django.contrib.auth.decorators import login_required
+
+from .forms import CustomPasswordChangeForm, LoginForm, ProfileSettingsForm, RegisterForm
+
+User = get_user_model()
+
+
+def home_view(request):
+    return render(request, 'home.html')
+
+
+def register_view(request):
+    form = RegisterForm()
+    if request.method == "POST":
+        form = RegisterForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            return redirect('main:home')
+    return render(request, "register.html", {"form": form})
+
+
+def login_view(request):
+    if request.user.is_authenticated:
+        return redirect('main:home')
+
+    if request.method == 'POST':
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            user = form.cleaned_data['user']
+            login(request, user)
+            next_url = request.GET.get('next', 'main:home')
+            return redirect(next_url)
+    else:
+        form = LoginForm()
+
+    return render(request, 'login.html', {'form': form})
+
+
+def logout_view(request):
+    logout(request)
+    return redirect('main:login')
+
+
+@login_required
+def profile_settings_view(request):
+    if request.method == 'POST':
+        form = ProfileSettingsForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Your profile has been updated successfully!')
+            return redirect('main:profile', username=request.user.username)
+    else:
+        form = ProfileSettingsForm(instance=request.user)
+    return render(request, 'profile_settings.html', {'form': form})
+
+
+@login_required
+def password_change_view(request):
+    if request.method == 'POST':
+        form = CustomPasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)
+            messages.success(request, 'Your password has been changed successfully!')
+            return redirect('main:profile_settings')
+    else:
+        form = CustomPasswordChangeForm(request.user)
+    return render(request, 'password_change.html', {'form': form})
+
+
+def public_profile_view(request, username):
+    profile_user = get_object_or_404(User, username__iexact=username)
+    context = {
+        'profile': profile_user,
+    }
+    return render(request, "profile.html", context)
+```
+
+### URLs (`main/urls.py`)
+```python
+from django.urls import path
+from .views import home_view, login_view, register_view, logout_view, public_profile_view, profile_settings_view, password_change_view
+
+app_name = "main"
+
+urlpatterns = [
+    path("", view=home_view, name="home"),
+    path("login/", view=login_view, name="login"),
+    path("register/", view=register_view, name="register"),
+    path('logout/', logout_view, name='logout'),
+    path('settings/', profile_settings_view, name='profile_settings'),
+    path('settings/password/', password_change_view, name='password_change'),
+    path('u/<str:username>/', public_profile_view, name='profile'),
+]
+```
+
+### Templates
+**`templates/base.html`**
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reddit-Clone -{% block title %}{% endblock %}</title>
+  </head>
+  <body>
+    {% include './partials/_header.html' %}
+    {% block content %}{% endblock %}
+    {% include './partials/_footer.html' %}
+  </body>
+</html>
+```
+
+**`templates/home.html`**
+```html
+{% extends './base.html' %}
+{% block content %}
+  <h1>Home Page</h1>
+{% endblock %}
+```
+
+**`templates/login.html`**
+```html
+<h1>Login</h1>
+{% if form.non_field_errors %}
+  <div style="color: red; margin-bottom: 15px; border: 1px solid red; padding: 10px; background-color: #ffe6e6;">
+    {% for error in form.non_field_errors %}
+      <p style="margin: 0;">{{ error }}</p>
+    {% endfor %}
+  </div>
+{% endif %}
+<form method="post" action="{% url 'main:login' %}">
+  {% csrf_token %}
+  <div style="margin-bottom: 10px;">
+    <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label><br />
+    {{ form.email }}
+    {% if form.email.errors %}
+      <div style="color: red;">{{ form.email.errors }}</div>
+    {% endif %}
+  </div>
+  <div style="margin-bottom: 15px;">
+    <label for="{{ form.password.id_for_label }}">{{ form.password.label }}</label><br />
+    {{ form.password }}
+    {% if form.password.errors %}
+      <div style="color: red;">{{ form.password.errors }}</div>
+    {% endif %}
+  </div>
+  <button type="submit" class="btn btn-primary">Login</button>
+</form>
+<p>Don't have an account? <a href="{% url 'main:register' %}">Register here</a></p>
+```
+
+**`templates/register.html`**
+```html
+<h1>Register Page</h1>
+{% if form.non_field_errors %}
+  <div style="color: red; margin-bottom: 15px; border: 1px solid red; padding: 10px;">
+    {% for error in form.non_field_errors %}
+      <p>{{ error }}</p>
+    {% endfor %}
+  </div>
+{% endif %}
+<form action="{% url 'main:register' %}" method="post" novalidate>
+  {% csrf_token %}
+  <div style="margin-bottom: 10px;">
+    <label for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}</label><br />
+    {{ form.first_name }}
+    {% if form.first_name.errors %}<div style="color: red;">{{ form.first_name.errors }}</div>{% endif %}
+  </div>
+  <div style="margin-bottom: 10px;">
+    <label for="{{ form.last_name.id_for_label }}">{{ form.last_name.label }}</label><br />
+    {{ form.last_name }}
+    {% if form.last_name.errors %}<div style="color: red;">{{ form.last_name.errors }}</div>{% endif %}
+  </div>
+  <div style="margin-bottom: 10px;">
+    <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label><br />
+    {{ form.email }}
+    {% if form.email.errors %}<div style="color: red;">{{ form.email.errors }}</div>{% endif %}
+  </div>
+  <div style="margin-bottom: 10px;">
+    <label for="{{ form.username.id_for_label }}">{{ form.username.label }}</label><br />
+    {{ form.username }}
+    {% if form.username.errors %}<div style="color: red;">{{ form.username.errors }}</div>{% endif %}
+  </div>
+  <div style="margin-bottom: 10px;">
+    <label for="{{ form.password1.id_for_label }}">{{ form.password1.label }}</label><br />
+    {{ form.password1 }}
+    {% if form.password1.errors %}<div style="color: red;">{{ form.password1.errors }}</div>{% endif %}
+    {% if form.password1.help_text %}<small style="color: gray; display: block; margin-top: 5px;">{{ form.password1.help_text|safe }}</small>{% endif %}
+  </div>
+  <div style="margin-bottom: 15px;">
+    <label for="{{ form.password2.id_for_label }}">{{ form.password2.label }}</label><br />
+    {{ form.password2 }}
+    {% if form.password2.errors %}<div style="color: red;">{{ form.password2.errors }}</div>{% endif %}
+  </div>
+  <button type="submit">Create Account</button>
+</form>
+<div>
+  <p>Already have Account</p>
+  <a href="{% url 'main:login' %}">Login</a>
+</div>
+```
+
+**`templates/profile.html`**
+```html
+<h1>Profile</h1>
+<p>{{ profile.username }}</p>
+```
+
+**`templates/partials/_header.html`**
+```html
+<header>Header</header>
+```
+
+**`templates/partials/_footer.html`**
+```html
+<footer>Footer</footer>
+```
+
