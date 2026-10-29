@@ -63,7 +63,7 @@ def profile_settings_view(request):
             form.save()
             messages.success(request, 'Your profile has been updated successfully!')
             # Redirect to the user's new profile page (in case username changed)
-            return redirect('main:profile', username=request.user.username)
+            return redirect('main:profile_settings')
     else:
         form = ProfileSettingsForm(instance=request.user)
 

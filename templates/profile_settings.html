@@ -1,60 +1,160 @@
 {% extends './base.html' %}
 
 {% block content %}
-  <h1>Profile Settings</h1>
-
-  <!-- 1. Display Non-Field Errors (e.g., "Passwords do not match") -->
-  {% if form.non_field_errors %}
-    <div style="color: red; margin-bottom: 15px; border: 1px solid red; padding: 10px;">
-      {% for error in form.non_field_errors %}
-        <p>{{ error }}</p>
-      {% endfor %}
-    </div>
-  {% endif %}
-
-  <form action="{% url 'main:profile_settings' %}" method="post" novalidate>
-    {% csrf_token %}
-
-    <!-- First Name -->
-    <div style="margin-bottom: 10px;">
-      <label for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}</label><br />
-      {{ form.first_name }}
-      {% if form.first_name.errors %}
-        <div style="color: red;">{{ form.first_name.errors }}</div>
-      {% endif %}
+  <div class="page__root page__root--wide">
+    <div class="page__header">
+      <h3 class="page__title">Update your profile settings</h3>
+      <p class="page__description">Keep your profile updated by submitting the form below.</p>
     </div>
 
-    <!-- Last Name -->
-    <div style="margin-bottom: 10px;">
-      <label for="{{ form.last_name.id_for_label }}">{{ form.last_name.label }}</label><br />
-      {{ form.last_name }}
-      {% if form.last_name.errors %}
-        <div style="color: red;">{{ form.last_name.errors }}</div>
-      {% endif %}
+    <div class="page__content">
+      <div class="settings__grid">
+        <!-- Main column: the form -->
+        <section class="settings__main">
+          <!-- 1. Display Non-Field Errors (e.g., "Passwords do not match") -->
+          {% if form.non_field_errors %}
+            <div>
+              {% for error in form.non_field_errors %}
+                <p>{{ error }}</p>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <form action="{% url 'main:profile_settings' %}" method="post" novalidate class="form__container">
+            {% csrf_token %}
+
+            <!-- First Name -->
+            <div class="form__field">
+              <label class="field__label" for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}</label>
+              {{ form.first_name }}
+              {% if form.first_name.errors %}
+                <div class="field__error">{{ form.first_name.errors }}</div>
+              {% endif %}
+            </div>
+
+            <!-- Last Name -->
+            <div class="form__field">
+              <label for="{{ form.last_name.id_for_label }}">{{ form.last_name.label }}</label>
+              {{ form.last_name }}
+              {% if form.last_name.errors %}
+                <div style="color: red;">{{ form.last_name.errors }}</div>
+              {% endif %}
+            </div>
+
+            <!-- Username -->
+            <div class="form__field">
+              <label for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+              {{ form.username }}
+              {% if form.username.errors %}
+                <div style="color: red;">{{ form.username.errors }}</div>
+              {% endif %}
+            </div>
+
+            <!-- Bio -->
+            <div class="form__field">
+              <label for="{{ form.bio.id_for_label }}">{{ form.bio.label }}</label>
+              {{ form.bio }}
+              {% if form.bio.errors %}
+                <div style="color: red;">{{ form.bio.errors }}</div>
+              {% endif %}
+            </div>
+
+            <button type="submit" class="form__submit__btn">Save Changes</button>
+          </form>
+        </section>
+
+        <!-- Side column: quick links -->
+        <aside class="settings__side">
+          <div class="settings__card">
+            <h4 class="settings__card-title">Account</h4>
+            <ul class="settings__links">
+              <li>
+                <a href="{% url 'main:password_change' %}" class="settings__link">
+                  Create Post
+                  <span aria-hidden="true">+</span>
+                </a>
+              </li>
+
+              <li>
+                <a href="{% url 'main:password_change' %}" class="settings__link">
+                  Update Password
+                  <span aria-hidden="true">→</span>
+                </a>
+              </li>
+            </ul>
+          </div>
+        </aside>
+      </div>
     </div>
-
-    <!-- Username -->
-    <div style="margin-bottom: 10px;">
-      <label for="{{ form.username.id_for_label }}">{{ form.username.label }}</label><br />
-      {{ form.username }}
-      {% if form.username.errors %}
-        <div style="color: red;">{{ form.username.errors }}</div>
-      {% endif %}
-    </div>
-
-    <!-- Bio -->
-    <div style="margin-bottom: 10px;">
-      <label for="{{ form.bio.id_for_label }}">{{ form.bio.label }}</label><br />
-      {{ form.bio }}
-      {% if form.bio.errors %}
-        <div style="color: red;">{{ form.bio.errors }}</div>
-      {% endif %}
-    </div>
-
-    <button type="submit">Save Changes</button>
-  </form>
-
-  <div>
-    <a href="{% url 'main:password_change' %}">Update Password</a>
   </div>
+{% endblock %}
+
+{% block extra_css %}
+  <style>
+    /* =====================================================Settings page — 2:1 grid===================================================== */
+    .page__root--wide {
+      max-width: none;
+    }
+    
+    .settings__grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr; /* the 2:1 layout */
+      gap: calc(var(--gap) * 8);
+      align-items: start; /* don't stretch the sidebar */
+    }
+    
+    .settings__main {
+      min-width: 0; /* prevents grid blowout from long inputs */
+    }
+    
+    /* ---- Sidebar card ---- */
+    .settings__card {
+      background-color: var(--bg-color);
+      border: 1px solid rgba(22, 19, 19, 0.08);
+      border-radius: var(--radius);
+      padding: calc(var(--gap) * 5);
+    }
+    
+    .settings__card-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: color-mix(in srgb, var(--fg-color) 60%, transparent);
+      margin-bottom: calc(var(--gap) * 3);
+    }
+    
+    .settings__links {
+      display: flex;
+      flex-direction: column;
+      gap: calc(var(--gap) * 2);
+    }
+    
+    .settings__link {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: calc(var(--gap) * 2.5) calc(var(--gap) * 3);
+      border-radius: var(--radius);
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--fg-color);
+      background-color: var(--light-color);
+      transition: background-color var(--transition), color var(--transition);
+    }
+    
+    .settings__link:hover {
+      background-color: var(--primary-color);
+      color: #fff;
+      opacity: 1;
+    }
+    
+    /* ===================================================== Responsive — collapse to single column ===================================================== */
+    @media (max-width: 900px) {
+      .settings__grid {
+        grid-template-columns: 1fr;
+        gap: calc(var(--gap) * 6);
+      }
+    }
+  </style>
 {% endblock %}
