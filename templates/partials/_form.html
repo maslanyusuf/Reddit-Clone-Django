@@ -1,0 +1,84 @@
+<div class="page__content">
+  <!-- 1. Display Non-Field Errors (e.g., "Passwords do not match") -->
+  {% if form.non_field_errors %}
+    <div style="color: red; margin-bottom: 15px; border: 1px solid red; padding: 10px;">
+      {% for error in form.non_field_errors %}
+        <p>{{ error }}</p>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <form action="{% url 'main:register' %}" method="post" novalidate class="form__container">
+    {% csrf_token %}
+
+    <!-- First Name -->
+    <div class="form__field">
+      <label class="field__label" for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}</label>
+      {{ form.first_name }}
+      {% if form.first_name.errors %}
+        <div class="field__error">{{ form.first_name.errors }}</div>
+      {% endif %}
+    </div>
+
+    <!-- Last Name -->
+    <div class="form__field">
+      <label for="{{ form.last_name.id_for_label }}">{{ form.last_name.label }}</label>
+      {{ form.last_name }}
+      {% if form.last_name.errors %}
+        <div class="field__error">{{ form.last_name.errors }}</div>
+      {% endif %}
+    </div>
+
+    <!-- Email -->
+    <div class="form__field">
+      <label class="field__label" for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+      {{ form.email }}
+      {% if form.email.help_text %}
+        <small class="field__help">{{ form.email.help_text }}</small>
+      {% endif %}
+      {% if form.email.errors %}
+        <div class="field__error">{{ form.email.errors }}</div>
+      {% endif %}
+    </div>
+
+    <!-- Username -->
+    <div class="form__field">
+      <label for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+      {{ form.username }}
+      {% if form.username.errors %}
+        <div class="field__error">{{ form.username.errors }}</div>
+      {% endif %}
+    </div>
+
+    <!-- Password 1 -->
+    <div class="form__field">
+      <label for="{{ form.password1.id_for_label }}">{{ form.password1.label }}</label>
+      {{ form.password1 }}
+      {% if form.password1.errors %}
+        <div class="field__error">{{ form.password1.errors }}</div>
+      {% endif %}
+      <!-- Show password requirements help text -->
+      {% if form.password1.help_text %}
+        <small>{{ form.password1.help_text|safe }}</small>
+      {% endif %}
+    </div>
+
+    <!-- Password 2 -->
+    <div class="form__field">
+      <label for="{{ form.password2.id_for_label }}">{{ form.password2.label }}</label>
+      {{ form.password2 }}
+      {% if form.password2.errors %}
+        <div class="field__error">{{ form.password2.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="form__actions">
+      <button type="submit" class="form__submit__btn">Create Account</button>
+    </div>
+  </form>
+
+  <div class="auth__switch">
+    <p class="auth__switch__text">Already have Account</p>
+    <a href="{% url 'main:login' %}" class="auth__switch__link">Login</a>
+  </div>
+</div>

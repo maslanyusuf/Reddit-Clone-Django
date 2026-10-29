@@ -1,38 +1,48 @@
-<h1>Login</h1>
+{% extends 'base.html' %}
 
-<!-- 1. Display Non-Field Errors (e.g., "Invalid email or password") -->
-{% if form.non_field_errors %}
-  <div style="color: red; margin-bottom: 15px; border: 1px solid red; padding: 10px; background-color: #ffe6e6;">
-    {% for error in form.non_field_errors %}
-      <p style="margin: 0;">{{ error }}</p>
-    {% endfor %}
+{% block content %}
+  <div class="page__root">
+    <div class="page__header">
+      <h3 class="page__title">Login to your account</h3>
+      <p class="page_description">Login with your credentials to continue</p>
+    </div>
+    <div class="page__content">
+      {% if form.non_field_errors %}
+        <div class="form__errors" role="alert">
+          {% for error in form.non_field_errors %}
+            <p>{{ error }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <form action="{% url 'main:login' %}" method="post" enctype="multipart/form-data" novalidate class="form__container">
+        {% csrf_token %}
+
+        {% for field in form %}
+          <div class="form__field{% if field.errors %} form__field--error{% endif %}">
+            <label class="field__label" for="{{ field.id_for_label }}">
+              {{ field.label }}
+              {% if field.field.required %}
+                <span class="field__required" aria-hidden="true">*</span>
+              {% endif %}
+            </label>
+
+            {{ field }}
+
+            {% if field.help_text and not field.errors %}
+              <small class="field__help">{{ field.help_text|safe }}</small>
+            {% endif %}
+
+            {% if field.errors %}
+              <div class="field__error">{{ field.errors }}</div>
+            {% endif %}
+          </div>
+        {% endfor %}
+
+        <div class="form__actions">
+          <button type="submit" class="form__submit__btn">Login</button>
+        </div>
+      </form>
+    </div>
   </div>
-{% endif %}
-
-<form method="post" action="{% url 'main:login' %}">
-  {% csrf_token %}
-
-  <!-- Email Field -->
-  <div style="margin-bottom: 10px;">
-    <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label><br />
-    {{ form.email }}
-    {% if form.email.errors %}
-      <div style="color: red;">{{ form.email.errors }}</div>
-    {% endif %}
-  </div>
-
-  <!-- Password Field -->
-  <div style="margin-bottom: 15px;">
-    <label for="{{ form.password.id_for_label }}">{{ form.password.label }}</label><br />
-    {{ form.password }}
-    {% if form.password.errors %}
-      <div style="color: red;">{{ form.password.errors }}</div>
-    {% endif %}
-  </div>
-
-  <button type="submit" class="btn btn-primary">Login</button>
-</form>
-
-<p>
-  Don't have an account? <a href="{% url 'main:register' %}">Register here</a>
-</p>
+{% endblock %}

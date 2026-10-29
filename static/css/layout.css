@@ -1,0 +1,59 @@
+/*
+=========================
+Container
+=========================
+*/
+.container {
+  width: 100%;
+  max-width: var(--container--max-width);
+  margin: 0 auto;
+  padding-inline: 16px;
+}
+
+.main__root {
+  width: 100%;
+  max-width: var(--container--max-width);
+  margin: 0 auto;
+  padding-inline: 16px;
+  flex: 1;
+  height: 100%;
+}
+
+/* =====================================================
+   Page layout
+   ===================================================== */
+.page__root {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--gap) * 10);
+  max-width: 480px;
+  margin: 0 auto;
+  padding: calc(var(--gap) * 12) 16px calc(var(--gap) * 16);
+}
+
+/* ---- Page header ---- */
+.page__header {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--gap) * 2);
+}
+
+.page__title {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--dark-color);
+  letter-spacing: -0.02em;
+}
+
+.page__description {
+  font-size: 0.925rem;
+  color: color-mix(in srgb, var(--fg-color) 65%, transparent);
+  line-height: 1.6;
+}
+
+.page__content {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--gap) * 6);
+}

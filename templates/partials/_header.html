@@ -1,30 +1,48 @@
-<header>
-  <nav>
-    <a href="{% url 'main:home' %}">RedditClone</a>
+<header class="header__root">
+  <nav class="container header__nav" aria-label="Main navigation">
+    <a href="{% url 'main:home' %}" class="header__brand">
+      <span class="header__brand-mark">r/</span>
+      RedditClone
+    </a>
 
-    <ul>
-      <li>
-        <a href="{% url 'main:home' %}">Home</a>
-      </li>
-    </ul>
+    <button class="header__toggle" type="button" aria-label="Toggle menu" aria-expanded="false" aria-controls="nav-menu">
+      <span class="header__toggle-bar"></span>
+      <span class="header__toggle-bar"></span>
+      <span class="header__toggle-bar"></span>
+    </button>
 
-    <ul>
-      {% if not request.user.is_authenticated %}
-        <li>
-          <a href="{% url 'main:register' %}">Create Account</a>
+    <div class="nav__navbar" id="nav-menu">
+      <ul class="nav__list">
+        <li class="nav__item">
+          <a href="{% url 'main:home' %}" class="nav__link">Home</a>
         </li>
-      {% else %}
-        <li>
-          <form action="{% url 'main:logout' %}" method="post">
-            {% csrf_token %}
-            <button type="submit">Logout</button>
-          </form>
-        </li>
+        {% if request.user.is_authenticated %}
+          <li class="nav__item">
+            <a href="#" class="nav__link">Create Post</a>
+          </li>
+        {% endif %}
+      </ul>
 
-        <li>
-          <a href="{% url 'main:profile_settings' %}">Settings</a>
-        </li>
-      {% endif %}
-    </ul>
+      <ul class="nav__list nav__list-end">
+        {% if not request.user.is_authenticated %}
+          <li class="nav__item">
+            <a href="{% url 'main:login' %}" class="nav__link">Log in</a>
+          </li>
+          <li class="nav__item">
+            <a href="{% url 'main:register' %}" class="btn btn-primary">Create Account</a>
+          </li>
+        {% else %}
+          <li class="nav__item">
+            <a href="{% url 'main:profile_settings' %}" class="nav__link">Settings</a>
+          </li>
+          <li class="nav__item">
+            <form action="{% url 'main:logout' %}" method="post" class="nav__form">
+              {% csrf_token %}
+              <button type="submit" class="nav__link nav__link--button">Logout</button>
+            </form>
+          </li>
+        {% endif %}
+      </ul>
+    </div>
   </nav>
 </header>

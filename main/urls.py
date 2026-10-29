@@ -1,5 +1,7 @@
-from django.urls import path
+from django.urls import include, path
 from .views import home_view,login_view,register_view,logout_view,public_profile_view,profile_settings_view,password_change_view
+
+
 app_name = "main"
 
 urlpatterns = [
@@ -12,3 +14,5 @@ urlpatterns = [
     # The 'u/' prefix is standard for Reddit-like user profiles (e.g., reddit.com/u/username)
     path('u/<str:username>/', public_profile_view, name='profile'),
 ]
+
+

@@ -1,1 +1,78 @@
-<footer>Footer</footer>
+<footer class="site-footer">
+  <div class="container footer__inner">
+    <!-- Brand + tagline -->
+    <div class="footer__brand">
+      <a href="{% url 'main:home' %}" class="footer__logo"><span class="footer__logo-mark">r/</span> RedditClone</a>
+      <p class="footer__tagline">A community-driven space to share, discuss, and vote on what matters.</p>
+    </div>
+
+    <!-- Link columns -->
+    <nav class="footer__nav" aria-label="Footer">
+      <div class="footer__col">
+        <h3 class="footer__heading">Explore</h3>
+        <ul class="footer__list">
+          <li>
+            <a href="{% url 'main:home' %}">Home</a>
+          </li>
+          <li>
+            <a href="#">All Posts</a>
+          </li>
+          <li>
+            <a href="#">Communities</a>
+          </li>
+          <li>
+            <a href="#">Create Post</a>
+          </li>
+        </ul>
+      </div>
+
+      <div class="footer__col">
+        <h3 class="footer__heading">Account</h3>
+        <ul class="footer__list">
+          {% if user.is_authenticated %}
+            <li>
+              <a href="#">My Profile</a>
+            </li>
+            <li>
+              <a href="#">Log out</a>
+            </li>
+          {% else %}
+            <li>
+              <a href="#">Log in</a>
+            </li>
+            <li>
+              <a href="#">Sign up</a>
+            </li>
+          {% endif %}
+        </ul>
+      </div>
+
+      <div class="footer__col">
+        <h3 class="footer__heading">About</h3>
+        <ul class="footer__list">
+          <li>
+            <a href="#">About Us</a>
+          </li>
+          <li>
+            <a href="#">Rules</a>
+          </li>
+          <li>
+            <a href="#">Privacy Policy</a>
+          </li>
+          <li>
+            <a href="#">Contact</a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+  </div>
+
+  <div class="container footer__bottom">
+    <p class="footer__copy">
+      &copy;{% now 'Y' %}RedditClone. All rights reserved.
+    </p>
+    <p class="footer__made">
+      Built with <span aria-hidden="true">♥</span> using Django
+    </p>
+  </div>
+</footer>

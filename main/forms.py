@@ -6,10 +6,10 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 class RegisterForm(UserCreationForm):
-    first_name = forms.CharField(required=True, max_length=256, widget=forms.TextInput(attrs={"type": "text", "class": "form-control"}))
-    last_name = forms.CharField(required=True, max_length=256, widget=forms.TextInput(attrs={"type": "text", "class": "form-control"}))
-    email = forms.EmailField(required=True, max_length=256, widget=forms.EmailInput(attrs={"type": "email", "class": "form-control"}))
-    username = forms.CharField(required=True, max_length=150, widget=forms.TextInput(attrs={"type": "text", "class": "form-control"}))
+    first_name = forms.CharField(required=True, max_length=256, widget=forms.TextInput(attrs={"type": "text"}))
+    last_name = forms.CharField(required=True, max_length=256, widget=forms.TextInput(attrs={"type": "text"}))
+    email = forms.EmailField(required=True, max_length=256,help_text="We will not share your email", widget=forms.EmailInput(attrs={"type": "email"}))
+    username = forms.CharField(required=True, max_length=150,help_text="Make sure to choose unique username", widget=forms.TextInput(attrs={"type": "text"}))
 
     class Meta:
         model = User
@@ -46,12 +46,12 @@ class LoginForm(forms.Form):
     email = forms.EmailField(
         required=True,
         max_length=256,
-        widget=forms.EmailInput(attrs={"type": "email", "class": "form-control", "placeholder": "Email Address"})
+        widget=forms.EmailInput(attrs={"type": "email", "placeholder": "Email Address"})
     )
 
     password = forms.CharField(
         required=True,
-        widget=forms.PasswordInput(attrs={"type": "password", "class": "form-control", "placeholder": "Password"})
+        widget=forms.PasswordInput(attrs={"type": "password", "placeholder": "Password"})
     )
 
     def clean_email(self):

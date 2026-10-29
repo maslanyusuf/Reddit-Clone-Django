@@ -1,0 +1,224 @@
+/*
+=========================
+HEADER
+=========================
+*/
+.header__root {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background-color: var(--bg-color);
+  border-bottom: 1px solid rgba(22, 19, 19, 0.08);
+  box-shadow: var(--shadow-sm);
+}
+
+.header__nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(var(--gap) * 6);
+  min-height: 64px;
+}
+
+/* Brand */
+.header__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--gap) * 2);
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--dark-color);
+  letter-spacing: -0.01em;
+}
+
+.header__brand:hover {
+  opacity: 1;
+  color: var(--primary-color);
+}
+
+.header__brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius);
+  background-color: var(--primary-color);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+/* Nav container */
+.nav__navbar {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--gap) * 8);
+  flex: 1;
+  justify-content: space-between;
+}
+
+.nav__list {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--gap) * 4);
+}
+
+.nav__list-end {
+  margin-left: auto;
+}
+
+/* Links */
+.nav__link {
+  position: relative;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--fg-color);
+  padding-block: calc(var(--gap) * 2);
+  transition: color var(--transition);
+}
+
+.nav__link:hover {
+  color: var(--primary-color);
+  opacity: 1;
+}
+
+.nav__link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background-color: var(--primary-color);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--transition);
+}
+
+.nav__link:hover::after,
+.nav__link[aria-current="page"]::after {
+  transform: scaleX(1);
+}
+
+/* Button-styled link (used for logout) */
+.nav__link--button {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  color: inherit;
+}
+
+.nav__form {
+  margin: 0;
+  display: inline;
+}
+
+/* Mobile toggle (hidden on desktop) */
+.header__toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.header__toggle-bar {
+  display: block;
+  justify-content: center;
+  align-items: center;
+  width: 22px;
+  height: 2px;
+  background-color: var(--dark-color);
+  transition:
+    transform var(--transition),
+    opacity var(--transition);
+}
+
+/* Toggle → X animation */
+.header__toggle[aria-expanded="true"] .header__toggle-bar:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+.header__toggle[aria-expanded="true"] .header__toggle-bar:nth-child(2) {
+  opacity: 0;
+}
+.header__toggle[aria-expanded="true"] .header__toggle-bar:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+/* ---- Mobile ---- */
+@media (max-width: 768px) {
+  .header__toggle {
+    display: flex;
+  }
+
+  .nav__navbar {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding: calc(var(--gap) * 4) 16px;
+    background-color: var(--bg-color);
+    border-bottom: 1px solid rgba(22, 19, 19, 0.08);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-8px);
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      opacity var(--transition),
+      transform var(--transition),
+      visibility var(--transition);
+  }
+
+  .nav__navbar.is-open {
+    transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .nav__list {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+  }
+
+  .nav__list-end {
+    margin-left: 0;
+    padding-top: calc(var(--gap) * 3);
+    margin-top: calc(var(--gap) * 3);
+    border-top: 1px solid rgba(22, 19, 19, 0.08);
+  }
+
+  .nav__item {
+    width: 100%;
+  }
+
+  .nav__link {
+    display: block;
+    padding-block: calc(var(--gap) * 3);
+  }
+
+  .nav__link::after {
+    display: none;
+  }
+
+  .nav__form,
+  .nav__form .nav__link--button {
+    width: 100%;
+    text-align: left;
+  }
+
+  .btn {
+    width: 100%;
+  }
+}
